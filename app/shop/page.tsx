@@ -1,3 +1,4 @@
+'use client'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ProductCard from '@/components/ProductCard'
@@ -7,6 +8,8 @@ import {
   ListBulletIcon,
   ChevronDownIcon
 } from '@heroicons/react/24/outline'
+
+import { useState } from 'react'
 
 // Sample clothing product data
 const products = [
@@ -56,7 +59,7 @@ const products = [
     name: 'Premium Athletic Shorts',
     price: 45.00,
     image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop',
-    rating: 4.5,
+    rating: 1.5,
     reviewCount: 94,
     category: 'Men'
   },
@@ -66,7 +69,7 @@ const products = [
     price: 52.00,
     originalPrice: 65.00,
     image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop',
-    rating: 4.9,
+    rating: 2.9,
     reviewCount: 178,
     category: 'Women',
     isSale: true
@@ -76,7 +79,7 @@ const products = [
     name: 'Training Joggers',
     price: 79.99,
     image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=400&fit=crop',
-    rating: 4.4,
+    rating: 3.4,
     reviewCount: 112,
     category: 'Men'
   },
@@ -93,11 +96,24 @@ const products = [
 ]
 
 const categories = [
-  'All Categories',
   'Men',
   'Women',
   'Kids',
   'Accessories'
+]
+
+const prices = [
+  'Under $50',
+  '$50 - $100',
+  '$100 - $200',
+  'Over $200'
+]
+
+const ratings = [
+  '4+ Stars',
+  '3+ Stars',
+  '2+ Stars',
+  '1+ Stars'
 ]
 
 const sortOptions = [
@@ -109,6 +125,59 @@ const sortOptions = [
 ]
 
 export default function ShopPage() {
+  const [selectedPrices, setSelectedPrices] = useState<string[]>([])
+  const [selectedRatings, setSelectedRatings] = useState<string[]>([])
+  const [selectedAvailability, setSelectedAvailability] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+
+  const prices_helper = (price: number) => {
+    let res = true
+    if (selectedPrices.length != 0){
+      if (price < 50.00){
+        res = selectedPrices.includes(prices[0])
+      }else if(price < 100.00){
+        res = selectedPrices.includes(prices[1])
+      }else if(price < 200.00){
+        res = selectedPrices.includes(prices[2])
+      }else if(price == 100.00){
+        res = (selectedPrices.includes(prices[1]) || selectedPrices.includes(prices[2]))
+      }else if(price == 200.00){
+        res = (selectedPrices.includes(prices[2]) || selectedPrices.includes(prices[3]))
+      }else{
+        res = selectedPrices.includes(prices[3])
+      }
+    }
+    return res
+  }
+
+  const categories_helper = (category: string) => {
+    let res = true
+    if (selectedCategories.length != 0){
+      res = selectedCategories.includes(category)
+    }
+    return res
+  }
+
+  const ratings_helper = (rating: number) => {
+    let res = true
+    if (selectedRatings.length != 0){
+      if(rating >= 4.0){
+        res = selectedRatings.includes(ratings[0])
+      }else if(rating >= 3.0){
+        res = selectedRatings.includes(ratings[1])
+      }else if(rating >= 2.0){
+        res = selectedRatings.includes(ratings[2])
+      }else{
+        res = selectedRatings.includes(ratings[3])
+      }
+    }
+    return res
+  }
+
+  const filteredProducts = products.filter(product => {
+    return(categories_helper(product.category) && prices_helper(product.price) && ratings_helper(product.rating))
+  })
+  
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -143,7 +212,15 @@ export default function ShopPage() {
                     <label key={category} className="flex items-center">
                       <input
                         type="checkbox"
+                        checked={selectedCategories.includes(category)}
                         className="rounded border-gray-300 text-black focus:ring-black"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCategories([...selectedCategories, category]);
+                          } else {
+                            setSelectedCategories(selectedCategories.filter(c => c !== category));
+                          }
+                        }}
                       />
                       <span className="ml-2 text-gray-700 text-sm">{category}</span>
                     </label>
@@ -155,34 +232,23 @@ export default function ShopPage() {
               <div className="mb-6">
                 <h4 className="font-bold text-black mb-3 uppercase tracking-wide text-sm">Price Range</h4>
                 <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-black focus:ring-black"
-                    />
-                    <span className="ml-2 text-gray-700 text-sm">Under $50</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-black focus:ring-black"
-                    />
-                    <span className="ml-2 text-gray-700 text-sm">$50 - $100</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-black focus:ring-black"
-                    />
-                    <span className="ml-2 text-gray-700 text-sm">$100 - $200</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-black focus:ring-black"
-                    />
-                    <span className="ml-2 text-gray-700 text-sm">Over $200</span>
-                  </label>
+                  {prices.map((price) => (
+                    <label key={price} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedPrices.includes(price)}
+                        className="rounded border-gray-300 text-black focus:ring-black"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedPrices([...selectedPrices, price]);
+                          } else {
+                            setSelectedPrices(selectedPrices.filter(c => c !== price));
+                          }
+                        }}
+                      />
+                      <span className="ml-2 text-gray-700 text-sm">{price}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -190,13 +256,21 @@ export default function ShopPage() {
               <div className="mb-6">
                 <h4 className="font-bold text-black mb-3 uppercase tracking-wide text-sm">Rating</h4>
                 <div className="space-y-2">
-                  {[4, 3, 2, 1].map((rating) => (
+                  {ratings.map((rating) => (
                     <label key={rating} className="flex items-center">
                       <input
                         type="checkbox"
+                        checked={selectedRatings.includes(rating)}
                         className="rounded border-gray-300 text-black focus:ring-black"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedRatings([...selectedRatings, rating]);
+                          } else {
+                            setSelectedRatings(selectedRatings.filter(c => c !== rating));
+                          }
+                        }}
                       />
-                      <span className="ml-2 text-gray-700 text-sm">{rating}+ Stars</span>
+                      <span className="ml-2 text-gray-700 text-sm">{rating}</span>
                     </label>
                   ))}
                 </div>
@@ -238,7 +312,7 @@ export default function ShopPage() {
             <div className="bg-white border border-gray-200 p-4 mb-6">
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex items-center space-x-4">
-                  <span className="text-gray-600 text-sm">Showing {products.length} products</span>
+                  <span className="text-gray-600 text-sm">Showing {filteredProducts.length} products</span>
                 </div>
                 
                 <div className="flex items-center space-x-4">
@@ -269,7 +343,7 @@ export default function ShopPage() {
 
             {/* Products Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
